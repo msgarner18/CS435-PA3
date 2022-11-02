@@ -10,8 +10,10 @@ Apparently, the apache spark tar file is considered to be too big to be saved on
 
 ### Setting up Apache Spark
 - I went to spark-3.3.1-bin-hadoop3/conf and ran cp spark-env.sh.template spark-env.sh
-- copied export "JAVA_HOME=..." line from ~/.bashrc and pasted it in spark-env.sh after the following lines:
+- copied export "JAVA_HOME=..." line from ~/.bashrc and pasted it in spark-env.sh after the following comments:
+
 This file is sourced when running various Spark programs.
+
 Copy it as spark-env.sh and edit that to configure Spark for your site.
 
 ### Running Apache Spark
