@@ -24,7 +24,7 @@ In ~/.bashrc, add the following 2 lines to the end of your file and adjust to wh
 - export SPARK_HOME=~/CS435/CS435-PA3/spark-3.3.1-bin-hadoop3/
 - export PATH=$PATH:$PATH_HOME/bin
 
-### Create Skeleton for PageRank app
+### Create Skeleton for PageRank app (you don't need to do this part)
 In CS435-PA3, run the following:
 - mvn archetype:generate -DarchetypeGroupId=net.alchim31.maven -DarchetypeArtifactId=scala-archetype-simple
 
@@ -48,8 +48,8 @@ In CS435-PA3/PageRank, run the following:
 -mvn package
 
 ### Run
-before main class added to dependencies:
-- spark-submit --class com.mycompany.App target/PageRank-1.0-SNAPSHOT.jar
+In PageRank, run the following:
 
-After main class added to dependencies:
-- spark-submit target/PageRank-1.0-SNAPSHOT.jar
+./run.sh
+
+You may need to run chmod +x on run.sh beforehand
