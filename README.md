@@ -24,6 +24,9 @@ In ~/.bashrc, add the following 2 lines to the end of your file and adjust to wh
 - export SPARK_HOME=~/CS435/CS435-PA3/spark-3.3.1-bin-hadoop3/
 - export PATH=$PATH:$PATH_HOME/bin
 
+### Changing the code
+- the main scala code is at PageRank/src/main/scala/com/mycompany/App.scala
+
 ### Run
 In PageRank, run the following:
 
@@ -51,6 +54,8 @@ In CS435-PA3/PageRank, run the following:
 If you only want to compile your test sources (but not execute them), run the following:
 -mvn test-compile
 
-### create jar
+### Create jar
 In CS435-PA3/PageRank, run the following:
 -mvn package
+
+When the jar file is created, it will be found under PageRank/target
