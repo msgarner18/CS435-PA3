@@ -24,7 +24,15 @@ In ~/.bashrc, add the following 2 lines to the end of your file and adjust to wh
 - export SPARK_HOME=~/CS435/CS435-PA3/spark-3.3.1-bin-hadoop3/
 - export PATH=$PATH:$PATH_HOME/bin
 
-### Create Skeleton for PageRank app (you don't need to do this part)
+### Run
+In PageRank, run the following:
+
+./run.sh
+
+You may need to run chmod +x on run.sh beforehand
+
+## Extra Potentially useful commands
+### Create Skeleton for PageRank app
 In CS435-PA3, run the following:
 - mvn archetype:generate -DarchetypeGroupId=net.alchim31.maven -DarchetypeArtifactId=scala-archetype-simple
 
@@ -46,10 +54,3 @@ If you only want to compile your test sources (but not execute them), run the fo
 ### create jar
 In CS435-PA3/PageRank, run the following:
 -mvn package
-
-### Run
-In PageRank, run the following:
-
-./run.sh
-
-You may need to run chmod +x on run.sh beforehand
