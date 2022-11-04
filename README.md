@@ -28,12 +28,12 @@ In ~/.bashrc, add the following 2 lines to the end of your file and adjust to wh
 ### Changing the code
 - the main scala code is at PageRank/src/main/scala/com/mycompany/App.scala
 
+## Running the Code
+### Compile
+mvn compile
+
 ### Run
-In PageRank, run the following:
-
 ./run.sh
-
-You may need to run chmod +x on run.sh beforehand
 
 ## Extra Potentially useful commands
 ### Create Skeleton for PageRank app
