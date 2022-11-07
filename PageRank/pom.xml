@@ -24,18 +24,32 @@
   </properties>
 
   <dependencies>
-  <!-- Scala -->
+    <!-- Scala -->
+    <!-- <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-core_2.12</artifactId>
+      <version>3.3.1</version>
+    </dependency> -->
+    
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-sql_2.12</artifactId>
+      <version>3.3.1</version>
+      <scope>provided</scope>
+    </dependency>
+
+  
     <!-- <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-sql_${scala.major.minor.version}</artifactId>
       <version>${spark.version}</version>
     </dependency> -->
 
-    <dependency>
+    <!-- <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-sql_2.11</artifactId>
       <version>2.0.1</version>
-    </dependency>
+    </dependency> -->
 
     <dependency>
       <groupId>org.scala-lang</groupId>
