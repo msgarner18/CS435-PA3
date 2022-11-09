@@ -10,3 +10,4 @@
 !.gitignore
 !*/PageRankScala/src/main/scala/PageRank.scala
 !README.md
+!*/PageRankScala/build.sbt
