@@ -44,7 +44,11 @@ object PageRank {
       val outgoing = title.split(" ")
       outgoing.map(t => (t, rank._2))
     }
-    pageRank.saveAsTextFile(args(2) + "pageRank")
+    // pageRank.saveAsTextFile(args(2) + "pageRank")
+
+    // coalesce(1) forces a single file output  
+    val sortedPageRank = pageRank.sortBy(x => x._2, false).coalesce(1) 
+    sortedPageRank.saveAsTextFile(args(2) + "sortedPageRank")
 
   }
  
