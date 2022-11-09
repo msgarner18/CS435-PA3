@@ -6,7 +6,7 @@ object PageRank {
   def main(args: Array[String]): Unit = {
 
     // uncomment below line and change the placeholders accordingly
-    val sc = SparkSession.builder().master("spark://salem:30120").getOrCreate().sparkContext
+    val sc = SparkSession.builder().master("spark://salem:30361").getOrCreate().sparkContext
 
     // to run locally in IDE,
     // But comment out when creating the jar to run on cluster
