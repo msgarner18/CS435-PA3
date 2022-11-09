@@ -32,7 +32,19 @@ object PageRank {
         // Updated ranks: { (B, _), (C, _), (D, _), (A, _), ... } 
         ranks = tempRank.reduceByKey(_+_)
     }
-    ranks.saveAsTextFile(args(2) + "updatedRanks")
+    
+    val titles = sc.textFile(args(1)).zipWithIndex().mapValues(x=>x+1).map(_.swap)
+    // titles.saveAsTextFile(args(2) + "titles")
+
+    val updatedRanks = ranks.zipWithIndex().mapValues(x=>x+1).map(_.swap)
+    // updatedRanks.saveAsTextFile(args(2) + "updatedRanks")
+
+    val pageRank = titles.join(updatedRanks).values.flatMap {  
+      case (title, rank)=>
+      val outgoing = title.split(" ")
+      outgoing.map(t => (t, rank._2))
+    }
+    pageRank.saveAsTextFile(args(2) + "pageRank")
 
   }
  
