@@ -1,3 +1,7 @@
 input/
+output/
 givenFiles/
 PageRank/
+PageRankScala/target/
+PageRankScala/project/
+PageRankScala/.idea/
