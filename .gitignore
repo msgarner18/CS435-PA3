@@ -8,5 +8,5 @@
 # /httpRequests/
 *
 !.gitignore
-!PageRankScala/src/main/scala/
+!*/PageRankScala/src/main/scala/PageRank.scala
 !README.md
