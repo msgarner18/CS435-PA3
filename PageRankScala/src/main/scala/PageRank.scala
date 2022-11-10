@@ -46,8 +46,8 @@ object PageRank {
     }
     // pageRank.saveAsTextFile(args(2) + "pageRank")
 
-    // coalesce(1) forces a single file output  
-    val sortedPageRank = pageRank.sortBy(x => x._2, false).coalesce(1) 
+    val sortedPageRankArray = pageRank.sortBy(x => x._2, false).take(10)
+    val sortedPageRank = sc.parallelize(sortedPageRankArray).coalesce(1)
     sortedPageRank.saveAsTextFile(args(2) + "sortedPageRank")
 
   }
