@@ -50,7 +50,7 @@ object PageRank {
     val sortedPageRank = sc.parallelize(sortedPageRankArray).coalesce(1)
     sortedPageRank.saveAsTextFile(args(2) + "sortedPageRank")
 
-    //-----START OF TAXATION ------
+    //-----START OF TAXATION
     val lines2 = sc.textFile(args(0))  
     val links2 = lines.map(s=>(s.split(": ")(0), s.split(": ")(1)))
     //links.saveAsTextFile(args(2) + "links")
@@ -86,5 +86,21 @@ object PageRank {
     val sortedPageRankArray2 = pageRank2.sortBy(x => x._2, false).take(10)
     val sortedPageRank2 = sc.parallelize(sortedPageRankArray2).coalesce(1)
     sortedPageRank2.saveAsTextFile(args(2) + "sortedPageRankWithTaxation")
-  }
+
+    //-----START OF WIKIBOMB------
+    val lines3 = sc.textFile(args(0))  
+    val links3 = lines3.map(s=>(s.split(": ")(0), s.split(": ")(1)))
+    links3.saveAsTextFile(args(2) + "links3")
+    val numLinks3 = links3.count()
+    var ranks3 = links3.mapValues(v => 1.0 / numLinks) 
+    // filter out titles that contain surfing
+    val titles3 = sc.textFile(args(1)).zipWithIndex().mapValues(x=>x+1).map(_.swap)
+    val newTitles3 = titles3.filter(t=> t._2.toLowerCase.contains("surfing"))
+    //get corresponding links for the above titles
+  //find link number for rocky mountain national park
+  //add rocky mountain national park number to list of links for each node in newLinks
+  //call page rank on newLinks
+  // combine titles with ranks
+
+
 }
