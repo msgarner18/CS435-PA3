@@ -1,13 +1,15 @@
-import org.apache.spark.sql.SparkSession
+// package main
 
+import org.apache.spark.sql.SparkSession
+// import main.Port
 
 object PageRank {
+  // private val 
 
-  def main(args: Array[String]): Unit = {
+  def main(args: Array[String]) = {
 
     // uncomment below line and change the placeholders accordingly
-    val sc = SparkSession.builder().master("spark://salem:30120").getOrCreate().sparkContext
-
+    val sc = SparkSession.builder().master("spark://salem:30361").getOrCreate().sparkContext;
     // to run locally in IDE,
     // But comment out when creating the jar to run on cluster
     //val sc = SparkSession.builder().master("local").getOrCreate().sparkContext
@@ -15,13 +17,115 @@ object PageRank {
     // to run with yarn, but this will be quite slow, if you like try it too
     // when running on the cluster make sure to use "--master yarn" option
 //    val sc = SparkSession.builder().master("yarn").getOrCreate().sparkContext
-    val lines = sc.textFile(args(0))  
-    val links = lines.map(s=>(s.split(": ")(0), s.split(": ")(1)))
+
+    val titles = sc.textFile(args(1)).zipWithIndex().mapValues(x=>x+1).map(_.swap)
+    
+    //-------WikiBomb-------
+    val origLinks = sc.textFile(args(0)).map(s=>(s.split(": ")(0), s.split(": ")(1)))
+    val links = composeWikiBomb(args, titles, origLinks)
+    
+    //-----Page Rank With and Without Taxation------
+    for (i <-1 to 2){
+      val ranks = if(i == 1) pageRankWithoutTaxation(links) else pageRankWithTaxation(links);
+
+      //-----Output--------
+      val pageRank = createPageRank(titles, ranks)
+      
+      val sortedPageRankArray = pageRank.sortBy(x => x._2, false).take(10)
+      val sortedPageRank = sc.parallelize(sortedPageRankArray).coalesce(1)
+
+      val outputFileName = if(i == 1) "pageRankWithoutTaxation" else "pageRankWithTaxation"
+      sortedPageRank.saveAsTextFile(args(2) + outputFileName)
+    }
+
+    
+  }
+
+  def composeWikiBomb(args: Array[String], titles: org.apache.spark.rdd.RDD[(Long, String)], origLinks: org.apache.spark.rdd.RDD[(String, String)]) : org.apache.spark.rdd.RDD[(String, String)] = {
+    // (id, title)
+    val surfTitles = titles.filter(t=> t._2.toLowerCase.contains("surfing"))
+    // surfTitles.saveAsTextFile(args(2) + "surfTitles")
+
+    // (id, links)
+    val numberedLinks = origLinks.zipWithIndex().mapValues(x=>x+1).map(_.swap)
+    // numberedLinks.saveAsTextFile(args(2) + "numberedLinks")
+
+    // (linkStartNode, LinkEndNodes)
+    val surfLinks = surfTitles.join(numberedLinks)
+    .values.map {  
+      case (id, links)=>
+        links
+    }
+    // surfLinks.saveAsTextFile(args(2) + "surfLinks")
+    
+    // (id, rocky mountain national park)
+    val rockyTitle = titles.filter(t=> t._2.toLowerCase.contains("rocky mountain national park"))
+    // rockyTitle.saveAsTextFile(args(2) + "rockyTitle")
+
+    // string
+    val rockyLinkKey = rockyTitle.join(numberedLinks).values.map {  
+      case (title, link)=>
+        link._1
+    }.first()
+
+    // alterSurfLinks such that each surf link includes rockyLinkKey as one of its LinkEndNodes
+    val alteredSurfLinks = surfLinks.map {
+      case (key, links)=>
+        val linkArray = links.split(" ")
+        if(linkArray.contains(rockyLinkKey)) {
+          (key, linkArray.mkString(" "))
+        } else {
+          val alteredLinks = links + " " + rockyLinkKey
+          val alteredLinksArray = alteredLinks.split(" ")
+          val sortedAlteredLinksArray  = alteredLinksArray.sortBy(x => x)
+          (key, sortedAlteredLinksArray.mkString(" "))
+        }
+    }
+    // alteredSurfLinks.saveAsTextFile(args(2) + "alteredSurfLinks")
+
+    // create links rdd with altered links (linkStartNode, LinkEndNodes)
+    val surfLinksArray = surfLinks.collect()
+    val alteredSurfLinksArray = alteredSurfLinks.collect()
+    val links = numberedLinks.map {
+      case (key, link) => {
+        val index = surfLinksArray.indexOf(link)
+        if(index == -1) {
+          link
+        } else {
+          alteredSurfLinksArray.apply(index)
+        }
+      }
+    }
+    // links.saveAsTextFile(args(2) + "links")
+
+    // return
+    links
+  }
+
+  def pageRankWithTaxation(links: org.apache.spark.rdd.RDD[(String, String)]) : org.apache.spark.rdd.RDD[(String, Double)] = {
     val numLinks = links.count()
-    var ranks = links.mapValues(v => 1.0 / numLinks) 
-    //ranks.saveAsTextFile(args(2)+ "ranks")
-    links.collect().foreach(println)
-    ranks.collect().foreach(println)
+    var ranks = links.mapValues(v => 1.0 / numLinks)
+
+    val b = 0.8
+    for (i <-1 to 25){
+        val tempRank = links.join(ranks).values.flatMap {  
+          case (urls, rank)=>
+            val outgoingLinks = urls.split(" ")
+            outgoingLinks.map(url => (url, ((b * rank /outgoingLinks.length) + (1-b)*1/numLinks)))
+        }
+        ranks = tempRank.reduceByKey(_+_)
+    }
+
+    ranks.sortByKey()
+
+    // return
+    ranks
+  }
+
+  def pageRankWithoutTaxation(links: org.apache.spark.rdd.RDD[(String, String)]) : org.apache.spark.rdd.RDD[(String, Double)] = {
+    val numLinks = links.count()
+    var ranks = links.mapValues(v => 1.0 / numLinks)
+
     for (i <-1 to 25){
         val tempRank = links.join(ranks).values.flatMap {  
             case (urls, rank)=>
@@ -31,77 +135,30 @@ object PageRank {
         // Updated ranks: { (B, _), (C, _), (D, _), (A, _), ... } 
         ranks = tempRank.reduceByKey(_+_)
     }
-    
-    val titles = sc.textFile(args(1)).zipWithIndex().mapValues(x=>x+1).map(_.swap)
-    // titles.saveAsTextFile(args(2) + "titles")
 
     ranks.sortByKey()
-    val updatedRanks = ranks.zipWithIndex().mapValues(x=>x+1).map(_.swap)
-    // updatedRanks.saveAsTextFile(args(2) + "updatedRanks")
-    
-    val pageRank = titles.join(updatedRanks).values.flatMap {  
-      case (title, rank)=>
-      val outgoing = title.split(" ")
-      outgoing.map(t => (t, rank._2))
-    }
-    // pageRank.saveAsTextFile(args(2) + "pageRank")
 
-    val sortedPageRankArray = pageRank.sortBy(x => x._2, false).take(10)
-    val sortedPageRank = sc.parallelize(sortedPageRankArray).coalesce(1)
-    sortedPageRank.saveAsTextFile(args(2) + "sortedPageRank")
-
-    //-----START OF TAXATION
-    val lines2 = sc.textFile(args(0))  
-    val links2 = lines.map(s=>(s.split(": ")(0), s.split(": ")(1)))
-    //links.saveAsTextFile(args(2) + "links")
-    val numLinks2 = links.count()
-    var ranks2 = links.mapValues(v => 1.0 / numLinks) 
-    val b = 0.8
-    for (i <-1 to 25){
-        val tempRank = links.join(ranks).values.flatMap {  
-            case (urls, rank)=>
-            val outgoingLinks = urls.split(" ")
-              //outgoingLinks.map(url => (url, rank /outgoingLinks.length))
-            outgoingLinks.map(url => (url, ((b * rank /outgoingLinks.length) + (1-b)*1/numLinks)))
-        }
-        // Updated ranks: { (B, _), (C, _), (D, _), (A, _), ... } 
-        ranks2 = tempRank.reduceByKey(_+_)
-        //ranks.saveAsTextFile(args(2) + "taxatedRates-" + i)
-    }
-    //ranks2.saveAsTextFile(args(2) + "rankTaxation")
-    val titles2 = sc.textFile(args(1)).zipWithIndex().mapValues(x=>x+1).map(_.swap)
-    //titles2.saveAsTextFile(args(2) + "titles")
-
-    ranks2.sortByKey()
-    val updatedRanks2 = ranks2.zipWithIndex().mapValues(x=>x+1).map(_.swap)
-    //updatedRanks2.saveAsTextFile(args(2) + "updatedRanks")
-
-    val pageRank2 = titles2.join(updatedRanks2).values.flatMap {  
-      case (title, rank)=>
-      val outgoing = title.split(" ")
-      outgoing.map(t => (t, rank._2))
-    }
-    //pageRank2.saveAsTextFile(args(2) + "pageRank")
-
-    val sortedPageRankArray2 = pageRank2.sortBy(x => x._2, false).take(10)
-    val sortedPageRank2 = sc.parallelize(sortedPageRankArray2).coalesce(1)
-    sortedPageRank2.saveAsTextFile(args(2) + "sortedPageRankWithTaxation")
-
-    //-----START OF WIKIBOMB------
-    val lines3 = sc.textFile(args(0))  
-    val links3 = lines3.map(s=>(s.split(": ")(0), s.split(": ")(1)))
-    links3.saveAsTextFile(args(2) + "links3")
-    val numLinks3 = links3.count()
-    var ranks3 = links3.mapValues(v => 1.0 / numLinks) 
-    // filter out titles that contain surfing
-    val titles3 = sc.textFile(args(1)).zipWithIndex().mapValues(x=>x+1).map(_.swap)
-    val newTitles3 = titles3.filter(t=> t._2.toLowerCase.contains("surfing"))
-    //get corresponding links for the above titles
-  //find link number for rocky mountain national park
-  //add rocky mountain national park number to list of links for each node in newLinks
-  //call page rank on newLinks
-  // combine titles with ranks
-
-
+    ranks
   }
+
+  def createPageRank(titles: org.apache.spark.rdd.RDD[(Long, String)], ranks: org.apache.spark.rdd.RDD[(String, Double)]) : org.apache.spark.rdd.RDD[(String, Double)] = {
+    val updatedRanks = ranks.zipWithIndex().mapValues(x=>x+1).map(_.swap)
+    //  updatedRanks.saveAsTextFile(args(2) + "updatedRanks")
+    
+    val pageRank = titles.join(updatedRanks).values.map {  
+      case (title, rank)=>
+        (title, rank._2)
+    }
+
+    pageRank
+  }
+
+  // def sortPageRank(pageRank: org.apache.spark.rdd.RDD[(String, Double)]) :  org.apache.spark.rdd.RDD[(String, Double)] = {
+    
+  //   // val sortedPageRank = sc.parallelize(sortedPageRankArray).coalesce(1)
+    
+  //   // sortedPageRank
+  // }
+
 }
+  
