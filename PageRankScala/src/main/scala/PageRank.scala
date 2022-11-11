@@ -19,24 +19,30 @@ object PageRank {
 //    val sc = SparkSession.builder().master("yarn").getOrCreate().sparkContext
 
     val titles = sc.textFile(args(1)).zipWithIndex().mapValues(x=>x+1).map(_.swap)
-    
-    //-------WikiBomb-------
-    val origLinks = sc.textFile(args(0)).map(s=>(s.split(": ")(0), s.split(": ")(1)))
-    val links = composeWikiBomb(args, titles, origLinks)
-    
-    //-----Page Rank With and Without Taxation------
-    for (i <-1 to 2){
-      val ranks = if(i == 1) pageRankWithoutTaxation(links) else pageRankWithTaxation(links);
-
-      //-----Output--------
-      val pageRank = createPageRank(titles, ranks)
+    for (j <- 1 to 2) {
+      //-------WikiBomb-------
+      val origLinks = sc.textFile(args(0)).map(s=>(s.split(": ")(0), s.split(": ")(1)))
+      val links = if(j==1) origLinks else composeWikiBomb(args, titles, origLinks)
+      val wikiString = if(j == 1) "" else "WikiBomb"
+      if(j == 2) {
+        links.coalesce(1).saveAsTextFile(args(2) + wikiString)
+      }
       
-      val sortedPageRankArray = pageRank.sortBy(x => x._2, false).take(10)
-      val sortedPageRank = sc.parallelize(sortedPageRankArray).coalesce(1)
+      //-----Page Rank With and Without Taxation------
+      for (i <-1 to 2){
+        val ranks = if(i == 1) pageRankWithoutTaxation(links) else pageRankWithTaxation(links);
 
-      val outputFileName = if(i == 1) "pageRankWithoutTaxation" else "pageRankWithTaxation"
-      sortedPageRank.saveAsTextFile(args(2) + outputFileName)
+        //-----Output--------
+        val pageRank = createPageRank(titles, ranks)
+        
+        val sortedPageRankArray = pageRank.sortBy(x => x._2, false).take(10)
+        val sortedPageRank = sc.parallelize(sortedPageRankArray).coalesce(1)
+
+        val outputFileName = if(i == 1) "pageRankWithoutTaxation" else "pageRankWithTaxation"
+        sortedPageRank.saveAsTextFile(args(2) + outputFileName+wikiString)
+      }
     }
+    
 
     
   }
@@ -152,13 +158,5 @@ object PageRank {
 
     pageRank
   }
-
-  // def sortPageRank(pageRank: org.apache.spark.rdd.RDD[(String, Double)]) :  org.apache.spark.rdd.RDD[(String, Double)] = {
-    
-  //   // val sortedPageRank = sc.parallelize(sortedPageRankArray).coalesce(1)
-    
-  //   // sortedPageRank
-  // }
-
 }
   
